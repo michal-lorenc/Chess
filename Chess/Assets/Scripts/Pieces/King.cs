@@ -9,7 +9,7 @@ public class King : Piece
     public bool IsDoubleChecked { get { return CheckingPieces.Count > 1; } }
 
     /// <summary>
-    /// Reference to pieces that currently checks this king.
+    /// Reference to pieces by which the king is in check.
     /// </summary>
     public List<Piece> CheckingPieces { get; set; } = new List<Piece>();
 
@@ -18,8 +18,10 @@ public class King : Piece
         Type = PieceType.KING;
     }
 
-    protected override List<Vector2Int> GetMoves()
+    public override void CalculateAttackedSquares ()
     {
-        return null;
+        base.CalculateAttackedSquares();
+
+        SquareAttacker.AttackNeighbourSquares();
     }
 }

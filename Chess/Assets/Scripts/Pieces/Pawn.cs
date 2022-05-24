@@ -9,8 +9,10 @@ public class Pawn : Piece
         Type = PieceType.PAWN;
     }
 
-    protected override List<Vector2Int> GetMoves()
+    public override void CalculateAttackedSquares()
     {
-        return null;
+        base.CalculateAttackedSquares();
+
+        SquareAttacker.AttackSquaresPawnStyle();
     }
 }

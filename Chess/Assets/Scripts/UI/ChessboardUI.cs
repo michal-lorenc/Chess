@@ -79,4 +79,9 @@ public class ChessboardUI : MonoBehaviour
             }
         }
     }
+
+    private void Marks ()
+    {
+
+    }
 }

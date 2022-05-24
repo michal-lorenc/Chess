@@ -16,10 +16,10 @@ public class Chess : MonoBehaviour
         Singleton = this;
         PrepareBoard();
 
-        PiecesOnBoard[0, 0].CalculateAttackedSquares();
+        //Debug.Log(PiecesOnBoard[1, 0].GetLegalMoves());
         PiecesOnBoard[0, 0].GetLegalMoves();
 
-        Piece piece = PiecesOnBoard[0, 0];
+        Piece piece = PiecesOnBoard[0, 1];
 
         foreach (Vector2Int pos in piece.GetLegalMoves())
         {
@@ -28,9 +28,9 @@ public class Chess : MonoBehaviour
     }
 
     /// <summary>
-    /// Looks through entire chessboard to find a king.
+    /// Looks through entire chessboard to find a king of given color.
     /// </summary>
-    /// <param name="kingColor">color of king</param>
+    /// <param name="kingColor">Color of king.</param>
     /// <returns>Reference to king of given color.</returns>
     public King GetKing (PieceColor kingColor)
     {
@@ -46,6 +46,38 @@ public class Chess : MonoBehaviour
         return null;
     }
 
+    /// <summary>
+    /// Recalculates everything.
+    /// </summary>
+    public void OnChessStateUpdate ()
+    {
+        King whiteKing = GetKing(PieceColor.WHITE);
+        King blackKing = GetKing(PieceColor.BLACK);
+
+        whiteKing.CheckingPieces.Clear();
+        blackKing.CheckingPieces.Clear();
+
+        for (int i = 0; i <= 1; i++)
+        {
+            foreach (Piece piece in PiecesOnBoard)
+            {
+                if (piece == null)
+                    continue;
+
+                switch (i)
+                {
+                    case 0:
+                        piece.UnpinPiece();
+                        break;
+                    case 1:
+                        piece.CalculateAttackedSquares();
+                        piece.CalculateLegalMoves();
+                        break;
+                }
+            }
+        }
+    }
+
     private void Start()
     {
         ExecuteMovePGN("Bf3", PieceColor.WHITE);
@@ -59,6 +91,7 @@ public class Chess : MonoBehaviour
     private void PrepareBoard ()
     {
         LoadFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        OnChessStateUpdate();
     }
 
     private void ClearBoard ()
@@ -174,6 +207,8 @@ public class Chess : MonoBehaviour
 
     private void ExecuteMove (Vector2Int from, Vector2Int to)
     {
-        
+
+
+        OnChessStateUpdate();
     }
 }

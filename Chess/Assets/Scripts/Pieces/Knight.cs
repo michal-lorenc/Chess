@@ -9,8 +9,10 @@ public class Knight : Piece
         Type = PieceType.KNIGHT;
     }
 
-    protected override List<Vector2Int> GetMoves()
+    public override void CalculateAttackedSquares()
     {
-        return null;
+        base.CalculateAttackedSquares();
+
+        SquareAttacker.AttackSquaresKnightStyle();
     }
 }

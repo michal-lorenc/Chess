@@ -9,8 +9,10 @@ public class Bishop : Piece
         Type = PieceType.BISHOP;
     }
 
-    protected override List<Vector2Int> GetMoves()
+    public override void CalculateAttackedSquares()
     {
-        return null;
+        base.CalculateAttackedSquares();
+
+        SquareAttacker.AttackDiagonalSquares();
     }
 }
