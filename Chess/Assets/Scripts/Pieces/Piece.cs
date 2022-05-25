@@ -124,7 +124,7 @@ public abstract class Piece
 
     /// <summary>
     /// 'Calculate Attacked Squares' should be called before this method.
-    /// Returns attacked squares, except for those on which the piece of our color stands
+    /// Returns attacked squares, except for those on which the piece of our color stands.
     /// Moves returned by this method might not be legal.
     /// </summary>
     /// <returns>Vector2Int list of theoretically possible moves.</returns>
@@ -153,5 +153,8 @@ public abstract class Piece
     public virtual void CalculateAttackedSquares ()
     {
         SquareAttacker.ClearAttackedSquares();
+
+        // Always add itself as potentially attacked square so we know how to exactly save king
+        SquareAttacker.PotentiallyAttackedSquares.Add(Position);
     }
 }

@@ -10,6 +10,9 @@ public class Chess : MonoBehaviour
     public static readonly int boardSize = 8;
     public static Chess Singleton { get; private set; }
 
+    // TODO
+    //  - Castling
+    //  - En passant
 
     private void Awake ()
     {
@@ -44,6 +47,32 @@ public class Chess : MonoBehaviour
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="position"></param>
+    /// <param name="attackingColor"></param>
+    /// <returns>True if square is attacked by any piece of given color.</returns>
+    public bool IsSquareAttacked (Vector2Int position, PieceColor attackingColor)
+    {
+        foreach (Piece piece in PiecesOnBoard)
+        {
+            if (piece == null)
+                continue;
+
+            if (piece.Color != attackingColor)
+                continue;
+
+            foreach (Vector2Int attackedPosition in piece.SquareAttacker.AttackedSquares)
+            {
+                if (attackedPosition == position)
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     /// <summary>
