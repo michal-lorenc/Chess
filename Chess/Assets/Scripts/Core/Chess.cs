@@ -5,7 +5,10 @@ using UnityEngine;
 public class Chess : MonoBehaviour
 {
     public Piece[,] PiecesOnBoard { get; private set; } = new Piece[boardSize, boardSize];
-    public PortableGameNotation pgn;
+    public PortableGameNotation PGN { get; private set; }
+    public ForsythEdwardsNotation FEN { get; private set; }
+    public UniversalChessInterface UCI { get; private set; }
+    public OpeningsBook OpeningsBook { get; private set; }
 
     public static readonly int boardSize = 8;
     public static Chess Singleton { get; private set; }
@@ -17,17 +20,14 @@ public class Chess : MonoBehaviour
     private void Awake ()
     {
         Singleton = this;
+        PGN = new PortableGameNotation();
+        FEN = new ForsythEdwardsNotation(this);
+        UCI = new UniversalChessInterface();
+        OpeningsBook = new OpeningsBook();
+
+        Debug.Log($"There are {OpeningsBook.GetOpeningsAmount()} openings loaded.");
+
         PrepareBoard();
-
-        //Debug.Log(PiecesOnBoard[1, 0].GetLegalMoves());
-        PiecesOnBoard[0, 0].GetLegalMoves();
-
-        Piece piece = PiecesOnBoard[0, 1];
-
-        foreach (Vector2Int pos in piece.GetLegalMoves())
-        {
-            Debug.Log("legal: " + pos);
-        }
     }
 
     /// <summary>
@@ -105,6 +105,9 @@ public class Chess : MonoBehaviour
                 }
             }
         }
+
+        Debug.Log(FEN.ConvertChessboardToFEN());
+        UCI.CalculatePosition(FEN.ConvertChessboardToFEN() + " w");
     }
 
     private void Start()
@@ -114,50 +117,22 @@ public class Chess : MonoBehaviour
         ExecuteMovePGN("d4", PieceColor.WHITE);
         ExecuteMovePGN("Nxf2+", PieceColor.WHITE);
 
-        pgn = PortableGameNotation.CreateFromString(@"[Event ""Live Chess""] [Site ""Chess.com""] [Date ""2022.05.16""] [Round "" ? ""] [White ""Sheri8cake""] [Black ""LoriMistrzuSzachista""] [Result ""1 - 0""] [ECO ""C55""] [WhiteElo ""643""] [BlackElo ""629""] [TimeControl ""180 + 2""] [EndTime ""19:41:42 PDT""] [Termination ""Sheri8cake won on time""] 1. e4 e5 2. Nf3 Nc6 3. Bc4 h6 4. d3 Nf6 5. Nc3 Bc5 6. d4 exd4 7. Nb5 a6 8. Bf4 axb5 9. Bxb5 Nxe4 10. O-O g5 11. Qe2 Qe7 12. a3 gxf4 13. b4 Bb6 14. c4 d6 15. c5 dxc5 16. bxc5 Bxc5 17. Qc4 Bd6 18. Nxd4 Nc5 19. Nxc6 bxc6 20. Bxc6+ Bd7 21. Bxa8 Kf8 22. Bf3 Be6 23. Qb5 Bd7 24. Qb8+ Qe8 25. Qa7 Rg8 26. g4 h5 27. h3 hxg4 28. hxg4 Bxg4 29. Bg2 Bh3 30. Rfe1 Rxg2+ 31. Kh1 Ne4 32. Qd4 f3 33. Qh8+ Ke7 34. Qxh3 Kf8 35. Qxf3 Nxf2+ 36. Kxg2 1-0");
+        PGN = PortableGameNotation.CreateFromString(@"[Event ""Live Chess""] [Site ""Chess.com""] [Date ""2022.05.16""] [Round "" ? ""] [White ""Sheri8cake""] [Black ""LoriMistrzuSzachista""] [Result ""1 - 0""] [ECO ""C55""] [WhiteElo ""643""] [BlackElo ""629""] [TimeControl ""180 + 2""] [EndTime ""19:41:42 PDT""] [Termination ""Sheri8cake won on time""] 1. e4 e5 2. Nf3 Nc6 3. Bc4 h6 4. d3 Nf6 5. Nc3 Bc5 6. d4 exd4 7. Nb5 a6 8. Bf4 axb5 9. Bxb5 Nxe4 10. O-O g5 11. Qe2 Qe7 12. a3 gxf4 13. b4 Bb6 14. c4 d6 15. c5 dxc5 16. bxc5 Bxc5 17. Qc4 Bd6 18. Nxd4 Nc5 19. Nxc6 bxc6 20. Bxc6+ Bd7 21. Bxa8 Kf8 22. Bf3 Be6 23. Qb5 Bd7 24. Qb8+ Qe8 25. Qa7 Rg8 26. g4 h5 27. h3 hxg4 28. hxg4 Bxg4 29. Bg2 Bh3 30. Rfe1 Rxg2+ 31. Kh1 Ne4 32. Qd4 f3 33. Qh8+ Ke7 34. Qxh3 Kf8 35. Qxf3 Nxf2+ 36. Kxg2 1-0");
     }
 
     private void PrepareBoard ()
     {
-        LoadFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+        FEN.ConvertFenToChessboard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
         OnChessStateUpdate();
     }
 
-    private void ClearBoard ()
+    public void ClearBoard ()
     {
         for (int x = 0; x < 8; x++)
         {
             for (int y = 0; y < 8; y++)
             {
                 PiecesOnBoard[x, y] = null;
-            }
-        }
-    }
-
-    private void LoadFromFEN (string fen)
-    {
-        ClearBoard();
-
-        fen = fen.Split(' ')[0];
-        int row = 7, column = 0;
-
-        foreach (char symbol in fen)
-        {
-            if (symbol == '/')
-            {
-                row--;
-                column = 0;
-                continue;
-            }
-
-            if (char.IsDigit(symbol))
-            {
-                column += int.Parse(symbol.ToString());
-            }
-            else
-            {
-                PiecesOnBoard[column, row] = PieceFactory.CreatePieceFromFEN(symbol, new Vector2Int(column, row));
-                column++;
             }
         }
     }
@@ -222,7 +197,7 @@ public class Chess : MonoBehaviour
     }
 
     /// <summary>
-    /// Supports two types of notation e.g:
+    /// UCI notation e.g:
     /// a1d8 and a1-d8
     /// </summary>
     /// <param name="moveString"></param>
@@ -239,5 +214,11 @@ public class Chess : MonoBehaviour
 
 
         OnChessStateUpdate();
+    }
+
+    private void OnApplicationPause (bool pause)
+    {
+        if (pause)
+            UCI.StopChessEngine();
     }
 }

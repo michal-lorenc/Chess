@@ -14,6 +14,11 @@ public class PortableGameNotation
         this.blackMoves = blackMoves;
     }
 
+    public PortableGameNotation ()
+    {
+
+    }
+
 
     public static PortableGameNotation CreateFromString (string pgnString)
     {

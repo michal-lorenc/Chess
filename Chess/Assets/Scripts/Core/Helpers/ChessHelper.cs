@@ -18,6 +18,29 @@ public static class ChessHelper
                 return PieceType.ROOK;
             case 'N':
                 return PieceType.KNIGHT;
+            case 'P':
+                return PieceType.PAWN;
+            default:
+                throw new ArgumentException();
+        }
+    }
+
+    public static char PieceTypeToChar (PieceType pieceType)
+    {
+        switch (pieceType)
+        {
+            case PieceType.KING:
+                return 'K';
+            case PieceType.QUEEN:
+                return 'Q';
+            case PieceType.BISHOP:
+                return 'B';
+            case PieceType.ROOK:
+                return 'R';
+            case PieceType.KNIGHT:
+                return 'N';
+            case PieceType.PAWN:
+                return 'P';
             default:
                 throw new ArgumentException();
         }

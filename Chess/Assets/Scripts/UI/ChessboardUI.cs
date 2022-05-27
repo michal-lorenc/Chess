@@ -15,8 +15,11 @@ public class ChessboardUI : MonoBehaviour
     private PieceSprites blackPieceSprites;
     [SerializeField, Space(3)]
     private GameObject piecePrefab;
+    [SerializeField]
+    private GameObject dotPrefab;
 
     private Transform[,] squareTransforms = new Transform[Chess.boardSize, Chess.boardSize];
+    private GameObject[,] dots = new GameObject[Chess.boardSize, Chess.boardSize];
     private MeshFilter meshFilter;
 
     private void Start ()
@@ -25,6 +28,17 @@ public class ChessboardUI : MonoBehaviour
         meshFilter.sharedMesh = new Mesh();
         RenderChessboard();
         InstantiatePieces();
+
+        ShowLegalMoves(new Vector2Int(1, 0));
+    }
+
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Debug.Log(Input.mousePosition);
+        }
+
     }
 
     public void RenderChessboard ()
@@ -62,6 +76,16 @@ public class ChessboardUI : MonoBehaviour
         squareTransform.SetParent(transform);
         squareTransform.localPosition = new Vector3(x + 0.5f, y + 0.5f, -0.001f);
         squareTransforms[x, y] = squareTransform;
+
+        CreateDot(squareTransform, x, y);
+    }
+
+    private void CreateDot (Transform parentSquare, int x, int y)
+    {
+        GameObject dot = Instantiate(dotPrefab, parentSquare);
+        dot.transform.localPosition = new Vector3(0, 0, 0);
+        dots[x, y] = dot;
+        dot.SetActive(false);
     }
 
     private void InstantiatePieces ()
@@ -80,8 +104,28 @@ public class ChessboardUI : MonoBehaviour
         }
     }
 
-    private void Marks ()
+    /// <summary>
+    /// Displays 
+    /// </summary>
+    /// <param name="position"></param>
+    private void ShowLegalMoves (Vector2Int position)
     {
+        HideLegalMoves();
 
+        Piece piece = Chess.Singleton.PiecesOnBoard[position.x, position.y];
+
+        if (piece == null)
+            return;
+
+        foreach (Vector2Int legalMove in piece.GetLegalMoves())
+        {
+            dots[legalMove.x, legalMove.y].SetActive(true);
+        }
+    }
+
+    private void HideLegalMoves ()
+    {
+        foreach (GameObject dot in dots)
+            dot.SetActive(false);
     }
 }
