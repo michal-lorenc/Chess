@@ -6,24 +6,24 @@ using UnityEngine.UI;
 [RequireComponent(typeof(GridLayoutGroup), typeof(ContentSizeFitter))]
 public class ChessUI : MonoBehaviour
 {
-    [Header("Design"), SerializeField]
-    private Color32 primaryColor;
-    [SerializeField]
-    private Color32 secondaryColor;
-    [SerializeField, Space(3)]
-    private PieceSprites whitePieceSprites;
-    [SerializeField]
-    private PieceSprites blackPieceSprites;
-
+    [field: SerializeField] public ChessSkin Skin { get; private set; }
     private TileUI[,] tiles = new TileUI[Chess.boardSize, Chess.boardSize];
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private GameObject piecePrefab;
+
+    public PieceUI draggedPiece = null;
+    public PieceUI selectedPiece = null;
+    [Header("References"), SerializeField]
+    private CoordinatesUI coordinatesUI;
+    [SerializeField] private EvaluationBarUI evaluationBarUI;
+    private GridLayoutGroup gridLayoutGroup;
 
     public static ChessUI Singleton { get; private set; }
 
     private void Awake ()
     {
         Singleton = this;
+        gridLayoutGroup = GetComponent<GridLayoutGroup>();
     }
 
     private void Start ()
@@ -31,6 +31,26 @@ public class ChessUI : MonoBehaviour
         CreateBoard();
         InstantiatePieces();
         HideLegalMoves();
+        RotateBoard(PieceColor.WHITE);
+    }
+
+    public void RotateBoard ()
+    {
+        if (gridLayoutGroup.startCorner == GridLayoutGroup.Corner.LowerLeft)
+            RotateBoard(PieceColor.BLACK);
+        else
+            RotateBoard(PieceColor.WHITE);
+    }
+
+    public void RotateBoard (PieceColor color)
+    {
+        if (color == PieceColor.WHITE)
+            gridLayoutGroup.startCorner = GridLayoutGroup.Corner.LowerLeft;
+        else
+            gridLayoutGroup.startCorner = GridLayoutGroup.Corner.UpperRight;
+
+        coordinatesUI.SwitchDisplay(color);
+        evaluationBarUI.SwitchDisplay(color);
     }
 
     private void CreateBoard ()
@@ -40,7 +60,7 @@ public class ChessUI : MonoBehaviour
             for (int x = 0; x < Chess.boardSize; x++)
             {
                 tiles[x, y] = Instantiate(tilePrefab, transform).GetComponent<TileUI>();
-                tiles[x, y].SetColor((y + x) % 2 == 0 ? primaryColor : secondaryColor);
+                tiles[x, y].SetColor((y + x) % 2 == 0 ? Skin.PrimaryColor : Skin.SecondaryColor);
                 tiles[x, y].position = new Vector2Int(x, y);
             }
         }
@@ -51,7 +71,7 @@ public class ChessUI : MonoBehaviour
 
     }
 
-    private void InstantiatePieces()
+    private void InstantiatePieces ()
     {
         for (int x = 0; x < Chess.boardSize; x++)
         {
@@ -62,14 +82,10 @@ public class ChessUI : MonoBehaviour
                 if (piece == null)
                     continue;
 
-                Instantiate(piecePrefab).GetComponent<PieceUI>().SetPiece(piece.Color == PieceColor.WHITE ? whitePieceSprites.GetSprite(piece.Type) : blackPieceSprites.GetSprite(piece.Type), tiles[x, y].transform);
+                Sprite pieceSprite = piece.Color == PieceColor.WHITE ? Skin.WhitePieceSprites.GetSprite(piece.Type) : Skin.BlackPieceSprites.GetSprite(piece.Type);
+                Instantiate(piecePrefab).GetComponent<PieceUI>().SetPiece(pieceSprite).SetParent(tiles[x, y]);
             }
         }
-    }
-
-    public void RotateBoard ()
-    {
-
     }
 
 

@@ -8,26 +8,41 @@ using UnityEngine.EventSystems;
 public class PieceUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerDownHandler, IPointerUpHandler
 {
     [SerializeField] private Image image;
-    private Transform parent;
+    private TileUI parentTile;
 
     private void Awake ()
     {
         image = GetComponent<Image>();
     }
 
-    public void SetPiece (Sprite sprite, Transform parentSquare)
+    public PieceUI SetPiece (Sprite sprite)
     {
-        parent = parentSquare;
         image.sprite = sprite;
-        transform.SetParent(parentSquare);
+
+        return this;
+    }
+
+    public PieceUI SetParent (TileUI parent)
+    {
+        parentTile = parent;
+        transform.SetParent(parentTile.transform);
         transform.localScale = new Vector3(1, 1, 1);
         transform.localPosition = Vector3.zero;
+
+        return this;
+    }
+
+    public TileUI GetParent ()
+    {
+        return parentTile;
     }
 
     public void OnBeginDrag (PointerEventData eventData)
     {
-        transform.SetParent(parent.parent.parent);
+        transform.SetParent(parentTile.transform.parent.parent);
         transform.position = eventData.position;
+        ChessUI.Singleton.draggedPiece = this;
+        image.raycastTarget = false;
     }
 
     public void OnDrag (PointerEventData eventData)
@@ -37,20 +52,26 @@ public class PieceUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragH
 
     public void OnEndDrag (PointerEventData eventData)
     {
-        transform.SetParent(parent);
-        transform.localPosition = Vector3.zero;
+        SetParent(parentTile);
+        ChessUI.Singleton.draggedPiece = null;
+        image.raycastTarget = true;
     }
 
     public void OnPointerDown (PointerEventData eventData)
     {
-        transform.SetParent(parent.parent.parent);
+        transform.SetParent(parentTile.transform.parent.parent);
         transform.position = eventData.position;
-        ChessUI.Singleton.ShowLegalMoves(parent.GetComponent<TileUI>().position);
+        ChessUI.Singleton.ShowLegalMoves(parentTile.position);
+       // ChessUI.Singleton.draggedPiece = this;
+        ChessUI.Singleton.selectedPiece = this;
+        image.raycastTarget = false;
     }
 
     public void OnPointerUp (PointerEventData eventData)
     {
-        transform.SetParent(parent);
-        transform.localPosition = Vector3.zero;
+        SetParent(parentTile);
+        parentTile.SetOutline(false);
+       // ChessUI.Singleton.draggedPiece = null;
+        image.raycastTarget = true;
     }
 }

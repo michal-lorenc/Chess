@@ -34,6 +34,21 @@ public abstract class Piece
         pinnedByPiece = null;
     }
 
+    public void SetPosition (Vector2Int position)
+    {
+        Position = position;
+    }
+
+    public bool IsMoveLegal (Vector2Int moveToTest)
+    {
+        foreach (Vector2Int legalMove in GetLegalMoves())
+        {
+            if (legalMove == moveToTest)
+                return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Returns previously calculated legal moves.
@@ -111,6 +126,8 @@ public abstract class Piece
                     }
                 }
             }
+
+            Debug.Log("Im pinned and my moveset is reduced :(");
 
             legalMovesPositions = possibleMoves;
             return legalMovesPositions;

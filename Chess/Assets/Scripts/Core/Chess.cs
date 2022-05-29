@@ -10,12 +10,16 @@ public class Chess : MonoBehaviour
     public UniversalChessInterface UCI { get; private set; }
     public OpeningsBook OpeningsBook { get; private set; }
 
+
+    public PieceColor ColorToMove { get; private set; } = PieceColor.WHITE;
+
     public static readonly int boardSize = 8;
     public static Chess Singleton { get; private set; }
 
     // TODO
     //  - Castling
     //  - En passant
+    //  - Pawn Promotion
 
     private void Awake ()
     {
@@ -86,7 +90,7 @@ public class Chess : MonoBehaviour
         whiteKing.CheckingPieces.Clear();
         blackKing.CheckingPieces.Clear();
 
-        for (int i = 0; i <= 1; i++)
+        for (int i = 0; i <= 2; i++)
         {
             foreach (Piece piece in PiecesOnBoard)
             {
@@ -100,14 +104,17 @@ public class Chess : MonoBehaviour
                         break;
                     case 1:
                         piece.CalculateAttackedSquares();
+                        break;
+                    case 2:
                         piece.CalculateLegalMoves();
                         break;
                 }
             }
         }
 
-        Debug.Log(FEN.ConvertChessboardToFEN());
-        UCI.CalculatePosition(FEN.ConvertChessboardToFEN() + " w");
+        char c = ColorToMove == PieceColor.WHITE ? 'w' : 'b';
+        UCI.CalculatePosition(FEN.ConvertChessboardToFEN() + " " + c);
+      //  UCI.CalculatePosition("4k3/1Q6/4K3/8/4P3/8/8/8 b - - 0 1");
     }
 
     private void Start()
@@ -198,7 +205,7 @@ public class Chess : MonoBehaviour
 
     /// <summary>
     /// UCI notation e.g:
-    /// a1d8 and a1-d8
+    /// a1d8 or b7b8q (promote to queen)
     /// </summary>
     /// <param name="moveString"></param>
     private void ExecuteMove (string moveString)
@@ -209,11 +216,44 @@ public class Chess : MonoBehaviour
         
     }
 
-    private void ExecuteMove (Vector2Int from, Vector2Int to)
+    /// <summary>
+    /// Executes move.
+    /// </summary>
+    /// <param name="from">From tile position.</param>
+    /// <param name="to">To tile position.</param>
+    /// <param name="promotion">If pawn is about to get promoted (q,b,n,r), otherwise white space.</param>
+    /// <returns>True if move has been successfuly executed & false on illegal moves.</returns>
+    public bool ExecuteMove (Vector2Int from, Vector2Int to, char promotion = ' ')
     {
+        if (from.x < 0 || from.x > boardSize - 1 || from.y < 0 || from.y > boardSize - 1)
+            return false;
 
+        if (to.x < 0 || to.x > boardSize - 1 || to.y < 0 || to.y > boardSize - 1)
+            return false;
 
+        Piece pieceToMove = PiecesOnBoard[from.x, from.y];
+
+        if (pieceToMove == null)
+            return false;
+
+        if (pieceToMove.Color != ColorToMove)
+            return false;
+
+        if (!pieceToMove.IsMoveLegal(to))
+            return false;
+
+        if (PiecesOnBoard[to.x, to.y] != null)
+        {
+            // we know that enemy piece will be destroyed
+        }
+
+        PiecesOnBoard[to.x, to.y] = pieceToMove;
+        PiecesOnBoard[from.x, from.y] = null;
+        pieceToMove.SetPosition(to);
+
+        ColorToMove = ColorToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
         OnChessStateUpdate();
+        return true;
     }
 
     private void OnApplicationPause (bool pause)

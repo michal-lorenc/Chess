@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System;
 using Debug = UnityEngine.Debug;
 
@@ -11,9 +12,13 @@ using Debug = UnityEngine.Debug;
 public class UniversalChessInterface
 {
     private Process chessEngineProcess;
+    private bool isProcessRunning = false;
 
     public EventHandler<string> OnEvaluationChanged;
+    public EventHandler<string> OnDepthChanged;
     public EventHandler<string> OnBestMoveFound;
+
+    private Queue<string> outputFromChessEngineProcess = new Queue<string>();
 
     public UniversalChessInterface ()
     {
@@ -22,6 +27,9 @@ public class UniversalChessInterface
 
     public void StartChessEngine ()
     {
+        isProcessRunning = true;
+        _ = PushEventsToMainThread();
+
         ProcessStartInfo si = new ProcessStartInfo()
         {
             FileName = GetStockfishLocation(),
@@ -47,6 +55,7 @@ public class UniversalChessInterface
 
     public void StopChessEngine ()
     {
+        isProcessRunning = false;
         chessEngineProcess.Kill();
     }
 
@@ -75,6 +84,7 @@ public class UniversalChessInterface
 
     public void CalculatePosition (string fen, int depth = 20)
     {
+        SendCommand("stop");
         SendCommand($"position fen {fen}");
         SendCommand($"go depth {depth}");
     }
@@ -84,9 +94,60 @@ public class UniversalChessInterface
         if (string.IsNullOrWhiteSpace(outputString))
             return;
 
-        if (outputString.Contains("Final evaluation"))
+        outputFromChessEngineProcess.Enqueue(outputString);
+    }
+
+    private void OnErrorReceived (string errorString)
+    {
+        Debug.Log("UCI Error: " + errorString);
+    }
+
+    /// <summary>
+    /// This method runs on Unity Main Thread.
+    /// It makes sure that all outputs are processed on main unity thread.
+    /// </summary>
+    private async Task PushEventsToMainThread ()
+    {
+        while (isProcessRunning)
         {
-            string evaluation = outputString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)[2];
+            if (outputFromChessEngineProcess.Count > 0)
+            {
+                string newOutput = outputFromChessEngineProcess.Dequeue();
+                ProcessOutput(newOutput);
+            }
+
+            await Task.Yield();
+        }
+    }
+
+    /// <summary>
+    /// Process output from chess engine and fire events on main thread.
+    /// </summary>
+    /// <param name="outputString"></param>
+    private void ProcessOutput (string outputString)
+    {
+        string[] outputSplit = outputString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+        if (outputString.StartsWith("info depth"))
+        {
+            OnDepthChanged?.Invoke(this, outputSplit[2]);
+
+            int indexOfMate = -1, indexOfCP = -1;
+            indexOfMate = Array.IndexOf(outputSplit, "mate");
+            indexOfCP = Array.IndexOf(outputSplit, "cp");
+
+            if (indexOfMate > -1)
+            {
+                OnEvaluationChanged?.Invoke(this, "M" + outputSplit[indexOfMate + 1]);
+            }
+            else if (indexOfCP > -1)
+            {
+                OnEvaluationChanged?.Invoke(this, outputSplit[indexOfCP + 1]);
+            }
+        }
+        else if (outputString.Contains("Final evaluation"))
+        {
+            string evaluation = outputSplit[2];
             OnEvaluationChanged?.Invoke(this, evaluation);
             Debug.Log("Evaluation: " + evaluation);
         }
@@ -99,10 +160,5 @@ public class UniversalChessInterface
         {
             Debug.Log(outputString);
         }
-    }
-
-    private void OnErrorReceived (string errorString)
-    {
-        Debug.Log("UCI Error: " + errorString);
     }
 }

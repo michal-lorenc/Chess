@@ -249,7 +249,7 @@ public class SquareAttacker
             if (potentiallyPinnedPiece == null)
             {
                 AttackedSquares.Add(new Vector2Int(x, y));
-                PotentiallyAttackedSquares.Add(new Vector2Int(x, y));
+                potentiallyAttackedSquaresTemporary.Add(new Vector2Int(x, y));
             }
             else
             {
@@ -313,7 +313,9 @@ public class SquareAttacker
         if (potentiallyAttackedSquaresTemporaryIsValid)
         {
             PotentiallyAttackedSquares.AddRange(potentiallyAttackedSquaresTemporary);
-            potentiallyPinnedPiece.PinPiece(parentPiece);
+
+            if (potentiallyPinnedPiece != null)
+                potentiallyPinnedPiece.PinPiece(parentPiece);
         }
 
         potentiallyAttackedSquaresTemporary.Clear();

@@ -1,84 +1,80 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using System;
 
 public class EvaluationBarUI : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    [SerializeField] private Image bar;
+    [SerializeField] private TextMeshProUGUI evaluationText;
+    [SerializeField] private TextMeshProUGUI depthText;
+
+    private void Start ()
     {
-        Debug.Log("XD: " + EvaluateFunction(-255 / 100));
+        Chess.Singleton.UCI.OnEvaluationChanged += (s, e) => OnEvaluationChanged(e);
+        Chess.Singleton.UCI.OnDepthChanged += (s, e) => OnDepthChanged(e);
     }
 
-    // Update is called once per frame
-    void Update()
+    private void OnDepthChanged (string depth)
     {
-        
+        depthText.text = "Depth: " + depth;
     }
 
-    public void OnStockfishMsg (string eventString)
+    public void SwitchDisplay (PieceColor color)
     {
-        if (!eventString.StartsWith("info depth"))
-            return;
+        bar.fillOrigin = color == PieceColor.WHITE ? 0 : 1;
+    }
 
-        string messageEvalType;
-        string[] message = eventString.Split(' ');
-
-        int indexOfMate = -1, indexOfCP = -1;
-        indexOfMate = Array.IndexOf(message, "mate");
-        indexOfCP = Array.IndexOf(message, "cp");
-
-        if (indexOfMate > -1)
+    private void OnEvaluationChanged (string dynamicEvaluation)
+    {
+        if (dynamicEvaluation[0] == 'M')
         {
-            messageEvalType = $"M{message[indexOfMate + 1]}";
+            evaluationText.text = dynamicEvaluation;
         }
         else
         {
-            messageEvalType = $"{message[indexOfCP + 1]}";
-        }
+            float evalValue = (float)Convert.ToDouble(dynamicEvaluation);
+            evalValue /= 100;
 
-        string evaluation = ConvertEvaluation(messageEvalType);
+            float evalValueForBar = EvaluateFunction(evalValue) + 0.5f;
+            UpdateBar(evalValueForBar);
 
-
-        if (evaluation.StartsWith("M"))
-        {
-
-        }
-        else
-        {
-            float evaluationFloat = float.Parse(evaluation);
-            evaluationFloat = evaluationFloat / 100;
-
-            float finalVal = EvaluateFunction(evaluationFloat);
-            Debug.Log("XD Result: " + finalVal);
-
+            if (evalValue >= 0)
+                evaluationText.text = "+" + evalValue.ToString("0.00");
+            else
+                evaluationText.text = evalValue.ToString("0.00");
         }
     }
 
-    private string ConvertEvaluation (string messageEvalType)
+    private void UpdateBar (float fillAmount, float animationDuration = 0.5f)
     {
-        return messageEvalType;
+        StopAllCoroutines();
+        StartCoroutine(AnimateBar(fillAmount, animationDuration));
+    }
+
+    private IEnumerator AnimateBar (float fillAmount, float animationDuration = 0.5f)
+    {
+        float startingFillAmount = bar.fillAmount;
+        float progress = 0;
+
+        while (progress < 1)
+        {
+            float currentFillAmount = Mathf.Lerp(startingFillAmount, fillAmount, progress);
+            bar.fillAmount = currentFillAmount;
+            progress += 1 / animationDuration * Time.deltaTime;
+            yield return null;
+        }
+
+        bar.fillAmount = fillAmount;
     }
 
     private float EvaluateFunction (float x)
     {
-        if (x >= -0.01 && x <= 0.01f)
-        {
-            return 0;
-        }
-        else if (x < 7)
-        {
-            return -(0.322495f * (float)Math.Pow(x, 2)) + 7.26599f * x + 4.11834f;
-        }
-        else
-        {
-            return (8 * x) / 145 + 5881 / 145;
-        }
-    }
+        float result = x / 10f;
+        result = Mathf.Clamp(result, 0f, 0.45f);
 
-    public void UpdateBar (string eval)
-    {
-
+        return result;
     }
 }
