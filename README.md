@@ -1,8 +1,6 @@
 # Unity Chess GUI
 ## About
 Screenshots will be added later.
-## Preview
-Screenshots will be added later.
 ## Features
 - [x] UCI Engines Support
 - [x] Dynamic Evaluation Bar
@@ -12,6 +10,8 @@ Screenshots will be added later.
   - [x] FEN
 - [x] Classic Chess
   - [x] Move Validation
+  - [x] Checks, Checkmates
+  - [x] Pinned pieces detection
   - [ ] Castling
   - [ ] En passant
   - [ ] Pawn Promotion
