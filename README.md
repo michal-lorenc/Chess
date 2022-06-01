@@ -1,6 +1,9 @@
 # Unity Chess GUI
+![Chess image](https://github.com/michal-lorenc/Chess/blob/main/Chess/Assets/Sprites/Other/Screenshots/chess%20game.png)
 ## About
-Screenshots will be added later.
+This is a chess project I made. It's main purpose is to provide free chess game analysis.\
+UI is separated from chess logic, so it can be easily reused outside Unity.\
+You can download the latest release version [here](https://github.com/michal-lorenc/Chess/releases "releases"). 
 ## Features
 - [x] UCI Engines Support
 - [x] Dynamic Evaluation Bar
@@ -28,8 +31,8 @@ Screenshots will be added later.
 - [x] ? Android (might work but not tested yet)
 ## External Assets
 Following assets are included in this project:
-- [x] [Stockfish 15](https://github.com/official-stockfish/Stockfish "Stockfish 15") executable files.
-- [x] [Material Design](https://material.io/design/sound/sound-resources.html# "Material Design") audioclips.
-- [x] [ShareChess](https://sharechess.github.io/ "ShareChess") piece sprites.
-- [x] Text Mesh PRO + some fonts on SIL Open Font License
+- [Stockfish 15](https://github.com/official-stockfish/Stockfish "Stockfish 15") executable files.
+- [Material Design](https://material.io/design/sound/sound-resources.html# "Material Design") audioclips.
+- [ShareChess](https://sharechess.github.io/ "ShareChess") piece sprites.
+- Text Mesh PRO + some fonts on SIL Open Font License
   
