@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Pawn : Piece
 {
-    public Pawn (PieceColor color, Vector2Int position) : base (color, position)
+    public Pawn (PieceColor color, Vector2Int position, Chess chess) : base (color, position, chess)
     {
         Type = PieceType.PAWN;
     }
@@ -16,10 +16,10 @@ public class Pawn : Piece
         // Attacking moves validation
         foreach (Vector2Int move in base.GetMoves())
         {
-            if (Chess.Singleton.PiecesOnBoard[move.x, move.y] == null)
+            if (chess.PiecesOnBoard[move.x, move.y] == null)
                 continue;
 
-            if (Chess.Singleton.PiecesOnBoard[move.x, move.y].Color == Color)
+            if (chess.PiecesOnBoard[move.x, move.y].Color == Color)
                 continue;
 
             finalMoves.Add(move);
@@ -38,7 +38,7 @@ public class Pawn : Piece
             else
                 finalY -= y;
 
-            if (Chess.Singleton.PiecesOnBoard[Position.x, finalY] == null)
+            if (chess.PiecesOnBoard[Position.x, finalY] == null)
                 finalMoves.Add(new Vector2Int(Position.x, finalY));
             else
                 break;

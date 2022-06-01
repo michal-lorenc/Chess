@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Bishop : Piece
 {
-    public Bishop (PieceColor color, Vector2Int position) : base (color, position)
+    public Bishop (PieceColor color, Vector2Int position, Chess chess) : base (color, position, chess)
     {
         Type = PieceType.BISHOP;
     }

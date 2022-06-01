@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Diagnostics;
@@ -7,7 +6,7 @@ using System;
 using Debug = UnityEngine.Debug;
 
 /// <summary>
-/// Class that creates and communicates with Stockfish 15 process
+/// Class that creates and communicates with Stockfish 15 process.
 /// </summary>
 public class UniversalChessInterface
 {
@@ -16,12 +15,16 @@ public class UniversalChessInterface
 
     public EventHandler<string> OnEvaluationChanged;
     public EventHandler<string> OnDepthChanged;
-    public EventHandler<string> OnBestMoveFound;
+    public EventHandler<Move> OnBestMoveFound;
+    public EventHandler<Move> OnGoodMoveFound;
 
     private Queue<string> outputFromChessEngineProcess = new Queue<string>();
+    private readonly object outputLock = new object();
+    private readonly Chess chess;
 
-    public UniversalChessInterface ()
+    public UniversalChessInterface (Chess chess)
     {
+        this.chess = chess;
         StartChessEngine();
     }
 
@@ -49,6 +52,7 @@ public class UniversalChessInterface
         chessEngineProcess.BeginErrorReadLine();
         chessEngineProcess.BeginOutputReadLine();
 
+        SendCommand($"setoption name Threads value {SystemInfo.processorCount}");
         SendCommand("ucinewgame");
         SendCommand("isready");
     }
@@ -94,7 +98,10 @@ public class UniversalChessInterface
         if (string.IsNullOrWhiteSpace(outputString))
             return;
 
-        outputFromChessEngineProcess.Enqueue(outputString);
+        lock (outputLock)
+        {
+            outputFromChessEngineProcess.Enqueue(outputString);
+        }
     }
 
     private void OnErrorReceived (string errorString)
@@ -110,10 +117,13 @@ public class UniversalChessInterface
     {
         while (isProcessRunning)
         {
-            if (outputFromChessEngineProcess.Count > 0)
+            lock (outputLock)
             {
-                string newOutput = outputFromChessEngineProcess.Dequeue();
-                ProcessOutput(newOutput);
+                if (outputFromChessEngineProcess.Count > 0)
+                {
+                    string newOutput = outputFromChessEngineProcess.Dequeue();
+                    ProcessOutput(newOutput);
+                }
             }
 
             await Task.Yield();
@@ -126,39 +136,68 @@ public class UniversalChessInterface
     /// <param name="outputString"></param>
     private void ProcessOutput (string outputString)
     {
-        string[] outputSplit = outputString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-        if (outputString.StartsWith("info depth"))
+        try
         {
-            OnDepthChanged?.Invoke(this, outputSplit[2]);
+            string[] outputSplit = outputString.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
-            int indexOfMate = -1, indexOfCP = -1;
-            indexOfMate = Array.IndexOf(outputSplit, "mate");
-            indexOfCP = Array.IndexOf(outputSplit, "cp");
-
-            if (indexOfMate > -1)
+            if (outputString.StartsWith("info depth"))
             {
-                OnEvaluationChanged?.Invoke(this, "M" + outputSplit[indexOfMate + 1]);
+                OnDepthChanged?.Invoke(this, outputSplit[2]);
+
+                int indexOfMate = -1, indexOfCP = -1, indexOfPV = -1;
+                indexOfMate = Array.IndexOf(outputSplit, "mate");
+                indexOfCP = Array.IndexOf(outputSplit, "cp");
+                indexOfPV = Array.IndexOf(outputSplit, "pv");
+
+                if (indexOfMate > -1)
+                {
+                    int eval = Convert.ToInt32(outputSplit[indexOfMate + 1]);
+
+                    if (chess.ColorToMove == PieceColor.BLACK)
+                        eval *= -1;
+
+                    if (eval < 0)
+                    {
+                        eval *= -1;
+                        OnEvaluationChanged?.Invoke(this, "-M" + eval);
+                    }
+                    else
+                    {
+                        OnEvaluationChanged?.Invoke(this, "+M" + eval);
+                    }
+                }
+                else if (indexOfCP > -1)
+                {
+                    int eval = Convert.ToInt32(outputSplit[indexOfCP + 1]);
+
+                    if (chess.ColorToMove == PieceColor.BLACK)
+                        eval *= -1;
+
+                    OnEvaluationChanged?.Invoke(this, eval.ToString());
+                }
+
+                if (indexOfPV > -1)
+                {
+                    try
+                    {
+                        string move = outputSplit[indexOfPV + 1];
+                        OnGoodMoveFound?.Invoke(this, new Move(move));
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError("wait a minute... " + indexOfPV + " " + outputString + " " + ex);
+                    }
+                }
             }
-            else if (indexOfCP > -1)
+            else if (outputString.Contains("bestmove"))
             {
-                OnEvaluationChanged?.Invoke(this, outputSplit[indexOfCP + 1]);
+                OnBestMoveFound?.Invoke(this, new Move(outputSplit[1]));
             }
         }
-        else if (outputString.Contains("Final evaluation"))
+        catch (Exception ex)
         {
-            string evaluation = outputSplit[2];
-            OnEvaluationChanged?.Invoke(this, evaluation);
-            Debug.Log("Evaluation: " + evaluation);
+            Debug.LogError("UCI EXCEPTION: " + ex.Message);
         }
-        else if (outputString.Contains("bestmove"))
-        {
-            OnBestMoveFound?.Invoke(this, outputString);
-            Debug.Log(outputString);
-        }
-        else
-        {
-            Debug.Log(outputString);
-        }
+
     }
 }

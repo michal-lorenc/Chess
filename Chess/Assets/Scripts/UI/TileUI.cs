@@ -11,6 +11,7 @@ public class TileUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointe
     [SerializeField] private Image legalMoveMark;
     [SerializeField] private Image captureMoveMark;
     [SerializeField] private Image outlineImage;
+    [SerializeField] private Image highlightImage;
     private Image backgroundImage;
 
     private void Awake ()
@@ -28,6 +29,11 @@ public class TileUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointe
         backgroundImage.sprite = sprite;
     }
 
+    public void SetHighlightColor (Color color)
+    {
+        highlightImage.color = color;
+    }
+
     public PieceUI GetPiece ()
     {
         // Get component is slow, but it's quick workaround for now
@@ -39,13 +45,21 @@ public class TileUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointe
         outlineImage.gameObject.SetActive(visible);
     }
 
+    public void SetHighlight (bool visible)
+    {
+        highlightImage.gameObject.SetActive(visible);
+    }
+
 
     public void ShowLegalMoveMark ()
     {
-        legalMoveMark.gameObject.SetActive(true);
+        if (GetPiece() != null)
+            captureMoveMark.gameObject.SetActive(true);
+        else
+            legalMoveMark.gameObject.SetActive(true);
     }
 
-    public void HideLegalMoveMark()
+    public void HideLegalMoveMark ()
     {
         legalMoveMark.gameObject.SetActive(false);
         captureMoveMark.gameObject.SetActive(false);
@@ -54,32 +68,33 @@ public class TileUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointe
     public void OnDrop (PointerEventData eventData)
     {
         PieceUI draggedPiece = ChessUI.Singleton.draggedPiece;
-
-        if (draggedPiece != null)
-        {
-            Debug.Log("dragged piece is not null");
-
-            bool success = Chess.Singleton.ExecuteMove(draggedPiece.GetParent().position, position);
-
-            if (success)
-            {
-                Debug.Log("Move OK. " + draggedPiece.GetParent().position + " : " + position);
-
-                PieceUI pieceOnThisSlot = GetPiece();
-                if (pieceOnThisSlot != null)
-                    Destroy(pieceOnThisSlot.gameObject);
-
-
-                draggedPiece.SetParent(this);
-                ChessUI.Singleton.HideLegalMoves();
-            }
-            else
-            {
-                Debug.Log("Move failed. " + draggedPiece.GetParent().position + " : " + position);
-            }
-        }
+        TryMovePiece(draggedPiece);
 
         outlineImage.gameObject.SetActive(false);
+    }
+
+    private void TryMovePiece (PieceUI pieceUI)
+    {
+        if (pieceUI == null)
+            return;
+
+        bool success = ChessUI.Singleton.Chess.ExecuteMove(pieceUI.GetParent().position, position);
+
+        if (success)
+        {
+            Debug.Log("Move OK. " + pieceUI.GetParent().position + " : " + position);
+
+            PieceUI pieceOnThisSlot = GetPiece();
+            if (pieceOnThisSlot != null)
+                Destroy(pieceOnThisSlot.gameObject);
+
+            pieceUI.SetParent(this);
+            ChessUI.Singleton.HideLegalMoves();
+        }
+        else
+        {
+            Debug.Log("Move failed. " + pieceUI.GetParent().position + " : " + position);
+        }
     }
 
     public void OnPointerExit (PointerEventData eventData)
@@ -97,6 +112,9 @@ public class TileUI : MonoBehaviour, IDropHandler, IPointerEnterHandler, IPointe
 
     public void OnPointerDown (PointerEventData eventData)
     {
+        PieceUI selectedPiece = ChessUI.Singleton.selectedPiece;
+        TryMovePiece(selectedPiece);
+
         ChessUI.Singleton.HideLegalMoves();
         ChessUI.Singleton.selectedPiece = null;
     }

@@ -5,7 +5,7 @@ using System;
 
 public static class PieceFactory
 {
-    public static Piece CreatePieceFromFEN (char fenSymbol, Vector2Int position)
+    public static Piece CreatePieceFromFEN (char fenSymbol, Vector2Int position, Chess chess)
     {
         PieceColor color = char.IsUpper(fenSymbol) ? PieceColor.WHITE : PieceColor.BLACK;
 
@@ -14,17 +14,17 @@ public static class PieceFactory
         switch (fenSymbol)
         {
             case 'K':
-                return new King(color, position);
+                return new King(color, position, chess);
             case 'Q':
-                return new Queen(color, position);
+                return new Queen(color, position, chess);
             case 'R':
-                return new Rook(color, position);
+                return new Rook(color, position, chess);
             case 'B':
-                return new Bishop(color, position);
+                return new Bishop(color, position, chess);
             case 'N':
-                return new Knight(color, position);
+                return new Knight(color, position, chess);
             case 'P':
-                return new Pawn(color, position);
+                return new Pawn(color, position, chess);
             default:
                 throw new ArgumentException();
         }

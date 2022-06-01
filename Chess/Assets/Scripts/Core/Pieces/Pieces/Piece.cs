@@ -17,11 +17,17 @@ public abstract class Piece
     public bool IsPinned { get { return pinnedByPiece != null; } }
     protected Piece pinnedByPiece = null;
 
-    public Piece (PieceColor pieceColor, Vector2Int position)
+    /// <summary>
+    /// Reference to chessboard.
+    /// </summary>
+    public readonly Chess chess;
+
+    public Piece (PieceColor pieceColor, Vector2Int position, Chess chess)
     {
         SquareAttacker = new SquareAttacker(this);
         Position = position;
         Color = pieceColor;
+        this.chess = chess;
     }
 
     public void PinPiece (Piece pinnedByPiece)
@@ -34,7 +40,7 @@ public abstract class Piece
         pinnedByPiece = null;
     }
 
-    public void SetPosition (Vector2Int position)
+    public virtual void SetPosition (Vector2Int position)
     {
         Position = position;
     }
@@ -66,7 +72,7 @@ public abstract class Piece
     /// <returns>Vector2Int list of legal positions it can move to.</returns>
     public virtual List<Vector2Int> CalculateLegalMoves ()
     {
-        King ourKing = Chess.Singleton.GetKing(Color);
+        King ourKing = chess.GetKing(Color);
 
         // No moves are possible when king is mated.
         if (ourKing.IsMated)
@@ -151,8 +157,8 @@ public abstract class Piece
 
         foreach (Vector2Int squarePosition in SquareAttacker.AttackedSquares)
         {
-            if (Chess.Singleton.PiecesOnBoard[squarePosition.x, squarePosition.y] != null && 
-                Chess.Singleton.PiecesOnBoard[squarePosition.x, squarePosition.y].Color == Color)
+            if (chess.PiecesOnBoard[squarePosition.x, squarePosition.y] != null && 
+                chess.PiecesOnBoard[squarePosition.x, squarePosition.y].Color == Color)
             {
                 continue;
             }

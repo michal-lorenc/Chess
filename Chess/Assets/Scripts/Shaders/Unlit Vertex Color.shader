@@ -5,11 +5,16 @@ Shader "Lorenc/Unlit Vertex Color"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        Tags {"Queue" = "Transparent" "RenderType" = "Opaque"}
 
         Pass
         {
+            
+            LOD 100
+            Cull off
+            Blend SrcAlpha OneMinusSrcAlpha
+            Zwrite off
+
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -28,7 +33,7 @@ Shader "Lorenc/Unlit Vertex Color"
                 float4 vertex : SV_POSITION;
             };
 
-            v2f vert (appdata v)
+            v2f vert(appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -36,12 +41,15 @@ Shader "Lorenc/Unlit Vertex Color"
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            fixed4 frag(v2f i) : SV_Target
             {
                 fixed4 col = i.color;
                 return col;
             }
             ENDCG
         }
+
+
+
     }
 }

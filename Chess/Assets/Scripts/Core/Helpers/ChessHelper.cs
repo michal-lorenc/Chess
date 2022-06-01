@@ -1,4 +1,5 @@
 using System;
+using UnityEngine;
 
 public static class ChessHelper
 {
@@ -78,23 +79,47 @@ public static class ChessHelper
         switch (number)
         {
             case 0:
-                return 'A';
+                return 'a';
             case 1:
-                return 'B';
+                return 'b';
             case 2:
-                return 'C';
+                return 'c';
             case 3:
-                return 'D';
+                return 'd';
             case 4:
-                return 'E';
+                return 'e';
             case 5:
-                return 'F';
+                return 'f';
             case 6:
-                return 'G';
+                return 'g';
             case 7:
-                return 'H';
+                return 'h';
             default:
                 throw new ArgumentException();
         }
+    }
+
+    public static string Vector2IntPositionToStringPosition (Vector2Int position)
+    {
+        return NumberToChar(position.x).ToString() + (position.y + 1);
+    }
+
+    public static Vector2Int StringPositionToVector2IntPosition (string position)
+    {
+        int x = CharToNumber(position[0]);
+        int y = Convert.ToInt32(position[1].ToString()) - 1;
+        return new Vector2Int(x, y);
+    }
+
+    public static char PieceColorToChar (PieceColor color)
+    {
+        char pieceColorChar = color == PieceColor.WHITE ? 'w' : 'b';
+        return pieceColorChar;
+    }
+
+    public static PieceColor CharToPieceColor (char color)
+    {
+        PieceColor pieceColor = color == 'w' ? PieceColor.WHITE : PieceColor.BLACK;
+        return pieceColor;
     }
 }

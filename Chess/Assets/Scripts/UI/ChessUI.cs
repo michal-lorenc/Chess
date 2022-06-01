@@ -7,22 +7,25 @@ using UnityEngine.UI;
 public class ChessUI : MonoBehaviour
 {
     [field: SerializeField] public ChessSkin Skin { get; private set; }
-    private TileUI[,] tiles = new TileUI[Chess.boardSize, Chess.boardSize];
+    public TileUI[,] tiles = new TileUI[Chess.boardSize, Chess.boardSize];
     [SerializeField] private GameObject tilePrefab;
     [SerializeField] private GameObject piecePrefab;
 
-    public PieceUI draggedPiece = null;
-    public PieceUI selectedPiece = null;
-    [Header("References"), SerializeField]
-    private CoordinatesUI coordinatesUI;
+    [HideInInspector] public PieceUI draggedPiece = null;
+    [HideInInspector] public PieceUI selectedPiece = null;
+    [Header("References"), SerializeField] private CoordinatesUI coordinatesUI;
     [SerializeField] private EvaluationBarUI evaluationBarUI;
+    [SerializeField] private MoveMarkerUI moveMarkerUI;
     private GridLayoutGroup gridLayoutGroup;
 
+    public Chess Chess { get; private set; }
     public static ChessUI Singleton { get; private set; }
 
     private void Awake ()
     {
         Singleton = this;
+        Chess = new Chess();
+        Chess.OnPieceMoved += (s, e) => OnPieceMoved(e);
         gridLayoutGroup = GetComponent<GridLayoutGroup>();
     }
 
@@ -32,6 +35,33 @@ public class ChessUI : MonoBehaviour
         InstantiatePieces();
         HideLegalMoves();
         RotateBoard(PieceColor.WHITE);
+    }
+
+    private void OnApplicationPause (bool pause)
+    {
+        if (pause)
+        {
+            if (Chess != null)
+                Chess.UCI.StopChessEngine();
+        }
+    }
+
+    private void OnApplicationQuit ()
+    {
+        if (Chess != null)
+            Chess.UCI.StopChessEngine();
+    }
+
+    public void OnPieceMoved (Move move)
+    {
+        if (!Skin.HighlightMoves)
+            return;
+
+        foreach (TileUI tile in tiles)
+            tile.SetHighlight(false);
+
+        tiles[move.From.x, move.From.y].SetHighlight(true);
+        tiles[move.To.x, move.To.y].SetHighlight(true);
     }
 
     public void RotateBoard ()
@@ -51,6 +81,7 @@ public class ChessUI : MonoBehaviour
 
         coordinatesUI.SwitchDisplay(color);
         evaluationBarUI.SwitchDisplay(color);
+        StartCoroutine(moveMarkerUI.OnBoardRotatedIE());
     }
 
     private void CreateBoard ()
@@ -61,6 +92,7 @@ public class ChessUI : MonoBehaviour
             {
                 tiles[x, y] = Instantiate(tilePrefab, transform).GetComponent<TileUI>();
                 tiles[x, y].SetColor((y + x) % 2 == 0 ? Skin.PrimaryColor : Skin.SecondaryColor);
+                tiles[x, y].SetHighlightColor(Skin.HighlightColor);
                 tiles[x, y].position = new Vector2Int(x, y);
             }
         }
@@ -77,7 +109,7 @@ public class ChessUI : MonoBehaviour
         {
             for (int y = 0; y < Chess.boardSize; y++)
             {
-                Piece piece = Chess.Singleton.PiecesOnBoard[x, y];
+                Piece piece = Chess.PiecesOnBoard[x, y];
 
                 if (piece == null)
                     continue;
@@ -93,7 +125,10 @@ public class ChessUI : MonoBehaviour
     {
         HideLegalMoves();
 
-        Piece piece = Chess.Singleton.PiecesOnBoard[position.x, position.y];
+        if (!Skin.DisplayLegalMoves)
+            return;
+
+        Piece piece = Chess.PiecesOnBoard[position.x, position.y];
 
         if (piece == null)
             return;

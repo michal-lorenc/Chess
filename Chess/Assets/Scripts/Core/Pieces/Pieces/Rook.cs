@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Rook : Piece
 {
-    public Rook (PieceColor color, Vector2Int position) : base (color, position)
+    public Rook (PieceColor color, Vector2Int position, Chess chess) : base (color, position, chess)
     {
         Type = PieceType.ROOK;
     }

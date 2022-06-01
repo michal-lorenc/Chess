@@ -176,7 +176,7 @@ public class SquareAttacker
             new Vector2Int(parentPiece.Position.x - 1, parentPiece.Color == PieceColor.WHITE ? parentPiece.Position.y + 1 : parentPiece.Position.y - 1)
         };
 
-        King enemyKing = Chess.Singleton.GetKing(parentPiece.Color == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE);
+        King enemyKing = parentPiece.chess.GetKing(parentPiece.Color == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE);
 
         foreach (Vector2Int position in positions)
         {
@@ -207,7 +207,7 @@ public class SquareAttacker
             new Vector2Int(parentPiece.Position.x + 2, parentPiece.Position.y - 1),
         };
 
-        King enemyKing = Chess.Singleton.GetKing(parentPiece.Color == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE);
+        King enemyKing = parentPiece.chess.GetKing(parentPiece.Color == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE);
 
         foreach (Vector2Int position in positions)
         {
@@ -241,7 +241,7 @@ public class SquareAttacker
     /// <returns>Returns true if the loop that executed this method should be continued and false if should be breaked.</returns>
     private bool CheckSquare (int x, int y)
     {
-        Piece piece = Chess.Singleton.PiecesOnBoard[x, y];
+        Piece piece = parentPiece.chess.PiecesOnBoard[x, y];
 
         // if the square is empty
         if (piece == null)

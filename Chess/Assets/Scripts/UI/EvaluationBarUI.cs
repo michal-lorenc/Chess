@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -13,8 +12,8 @@ public class EvaluationBarUI : MonoBehaviour
 
     private void Start ()
     {
-        Chess.Singleton.UCI.OnEvaluationChanged += (s, e) => OnEvaluationChanged(e);
-        Chess.Singleton.UCI.OnDepthChanged += (s, e) => OnDepthChanged(e);
+        ChessUI.Singleton.Chess.UCI.OnEvaluationChanged += (s, e) => OnEvaluationChanged(e);
+        ChessUI.Singleton.Chess.UCI.OnDepthChanged += (s, e) => OnDepthChanged(e);
     }
 
     private void OnDepthChanged (string depth)
@@ -29,16 +28,21 @@ public class EvaluationBarUI : MonoBehaviour
 
     private void OnEvaluationChanged (string dynamicEvaluation)
     {
-        if (dynamicEvaluation[0] == 'M')
+        if (dynamicEvaluation[1] == 'M')
         {
             evaluationText.text = dynamicEvaluation;
+
+            if (dynamicEvaluation[0] == '+')
+                UpdateBar(1f);
+            else
+                UpdateBar(0f);
         }
         else
         {
             float evalValue = (float)Convert.ToDouble(dynamicEvaluation);
             evalValue /= 100;
 
-            float evalValueForBar = EvaluateFunction(evalValue) + 0.5f;
+            float evalValueForBar = 0.5f + EvaluateFunction(evalValue);
             UpdateBar(evalValueForBar);
 
             if (evalValue >= 0)
@@ -73,7 +77,7 @@ public class EvaluationBarUI : MonoBehaviour
     private float EvaluateFunction (float x)
     {
         float result = x / 10f;
-        result = Mathf.Clamp(result, 0f, 0.45f);
+        result = Mathf.Clamp(result, -0.45f, 0.45f);
 
         return result;
     }

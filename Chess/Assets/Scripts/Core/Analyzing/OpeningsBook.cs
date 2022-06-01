@@ -1,11 +1,12 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Newtonsoft.Json;
 using System.IO;
+using System;
 
 public class OpeningsBook
 {
+    public EventHandler<string> OnOpeningRecognized;
     private List<Opening> openingList = new List<Opening>();
     private readonly string openingsJsonPath = Application.dataPath + "/Stockfish/openings.json";
 
@@ -28,7 +29,10 @@ public class OpeningsBook
         foreach (Opening opening in openingList)
         {
             if (opening.Moves == moves)
+            {
+                OnOpeningRecognized?.Invoke(this, opening.Name);
                 return opening.Name;
+            }
         }
 
         return null;

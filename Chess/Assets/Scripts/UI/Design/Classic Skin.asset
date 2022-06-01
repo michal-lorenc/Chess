@@ -18,6 +18,9 @@ MonoBehaviour:
   <SecondaryColor>k__BackingField:
     serializedVersion: 2
     rgba: 4292013806
+  <HighlightColor>k__BackingField:
+    serializedVersion: 2
+    rgba: 1543546623
   <WhitePieceSprites>k__BackingField:
     king: {fileID: 21300000, guid: 8b7f85fe87a21484dad9a980a03d85a3, type: 3}
     queen: {fileID: 21300000, guid: 8957ee0588dce344f8a580b9e4910c46, type: 3}
@@ -32,3 +35,6 @@ MonoBehaviour:
     bishop: {fileID: 21300000, guid: 50ff2bf25b4db3646ad94ed19a4aee26, type: 3}
     knight: {fileID: 21300000, guid: 6dc3ac713416ec145afc737c7cbd2806, type: 3}
     pawn: {fileID: 21300000, guid: 6246bc7801b2fb7498a2ce3a72c0c91c, type: 3}
+  <DisplayLegalMoves>k__BackingField: 1
+  <HighlightMoves>k__BackingField: 1
+  <SoundsEnabled>k__BackingField: 0
